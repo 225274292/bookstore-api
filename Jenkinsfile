@@ -22,17 +22,15 @@ pipeline {
       }
     }
 
-    stage('Test (Jest)') {
-      steps {
+    steps {
         bat 'npm ci'
-        bat 'npm test'
+        bat 'npx jest --coverage --coverageReporters=lcov'
       }
       post {
         always {
           archiveArtifacts artifacts: 'coverage/**', onlyIfSuccessful: false
         }
       }
-    }
 
     stage('Deploy (Staging)') {
       steps {
