@@ -1,8 +1,24 @@
 pipeline {
   agent any
-   
+
+  tools {
+    nodejs 'Node20'   // Jenkins -> Manage Jenkins -> Tools -> NodeJS installations
+  }
+
+  options {
+    timestamps()
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
     stage('Build (Docker)') {
-    steps {
+      steps {
         bat 'docker build -t bookstore-api:%BUILD_NUMBER% .'
       }
     }
@@ -14,30 +30,30 @@ pipeline {
       }
       post {
         always {
-          archiveArtifacts artifacts: 'coverage/**', allowEmptyArchive: true
+          archiveArtifacts artifacts: 'coverage/**', onlyIfSuccessful: false, allowEmptyArchive: true
         }
       }
     }
 
     stage('Deploy (Staging)') {
-  steps {
-    bat 'docker stop bookstore-staging || ver > nul'
-    bat 'docker run -d --rm -p 3001:3000 --name bookstore-staging bookstore-api:%BUILD_NUMBER%'
-    bat 'curl -f http://localhost:3001/health'
-  }
-  post {
-    always {
-      bat 'docker stop bookstore-staging || ver > nul'
+      steps {
+        // stop any previous container (ignore errors)
+        bat 'docker stop bookstore-staging || ver > nul'
+        // run staging on host port 3001 -> container 3000
+        bat 'docker run -d --rm -p 3001:3000 --name bookstore-staging bookstore-api:%BUILD_NUMBER%'
+        // smoke test
+        bat 'curl -f http://localhost:3001/health'
+      }
+      post {
+        always {
+          bat 'docker stop bookstore-staging || ver > nul'
+        }
+      }
     }
   }
-}
 
   post {
-    success {
-      echo 'Pipeline SUCCESS'
-    }
-    failure {
-      echo 'Pipeline FAILED'
-    }
+    success { echo 'Pipeline SUCCESS' }
+    failure { echo 'Pipeline FAILED' }
   }
 }
