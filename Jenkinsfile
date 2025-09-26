@@ -2,12 +2,11 @@ pipeline {
   agent any
 
   tools {
-    nodejs 'Node20'   // Jenkins → Manage Jenkins → Tools → NodeJS installations (you already set this)
+    nodejs 'Node20'
   }
 
   options {
     timestamps()
-    ansiColor('xterm')
   }
 
   stages {
@@ -38,12 +37,10 @@ pipeline {
     stage('Deploy (Staging)') {
       steps {
         bat 'docker run -d --rm -p 3000:3000 --name bookstore-staging bookstore-api:%BUILD_NUMBER%'
-        // quick smoke check
         bat 'curl -f http://localhost:3000/health'
       }
       post {
         always {
-          // stop container even if smoke fails
           bat 'docker stop bookstore-staging || ver > nul'
         }
       }
