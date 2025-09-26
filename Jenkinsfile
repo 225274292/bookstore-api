@@ -37,20 +37,21 @@ pipeline {
       }
     }
 
-    stage('Deploy (Staging)') {
+        stage('Deploy (Staging)') {
       steps {
-        // Run the freshly built image and smoke test /health
-        bat 'docker run -d --rm -p 3000:3000 --name bookstore-staging bookstore-api:%BUILD_NUMBER%'
-        bat 'curl -f http://localhost:3000/health'
+        // stop any previous container using our name (ignore errors)
+        bat 'docker stop bookstore-staging || ver > nul'
+        // run on host port 3001 -> container 3000
+        bat 'docker run -d --rm -p 3001:3000 --name bookstore-staging bookstore-api:%BUILD_NUMBER%'
+        // smoke test on port 3001
+        bat 'curl -f http://localhost:3001/health'
       }
       post {
         always {
-          // Ensure staging container is stopped even if curl fails
           bat 'docker stop bookstore-staging || ver > nul'
         }
       }
     }
-  }
 
   post {
     success { echo 'Pipeline OK' }
