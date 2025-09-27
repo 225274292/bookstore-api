@@ -16,6 +16,13 @@ pipeline {
         checkout scm
       }
     }
+    stage('Lint (ESLint)') {
+      steps {
+        bat 'npm ci'
+        bat 'npx eslint .'
+      }
+    }
+
 
     stage('Build (Docker)') {
       steps {
@@ -23,9 +30,8 @@ pipeline {
       }
     }
 
-    stage('Test (Jest + Coverage)') {
+      stage('Test (Jest + Coverage)') {
       steps {
-        bat 'npm ci'
         bat 'npx jest --coverage --coverageReporters=lcov'
       }
       post {
